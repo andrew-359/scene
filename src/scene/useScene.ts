@@ -1,4 +1,4 @@
-import { WebGLRenderer, PerspectiveCamera, Scene } from 'three';
+import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { useSky } from './hooks/useSky';
 import { useGround } from './hooks/useGround';
@@ -37,9 +37,9 @@ export interface SceneConfig {
 }
 
 type SceneRefs = {
-  renderer: WebGLRenderer | null;
-  camera: PerspectiveCamera | null;
-  scene: Scene | null;
+  renderer: THREE.WebGLRenderer | null;
+  camera: THREE.PerspectiveCamera | null;
+  scene: THREE.Scene | null;
   controls: OrbitControls | null;
   sky: any;
   ground: any;
@@ -98,7 +98,7 @@ export const useScene = () => {
     sceneRefs.renderer = refs.renderer;
     sceneRefs.camera = refs.camera;
     sceneRefs.controls = refs.controls;
-    sceneRefs.scene = new Scene();
+    sceneRefs.scene = new THREE.Scene();
 
     // создаем небо
     const sky  = createSky()

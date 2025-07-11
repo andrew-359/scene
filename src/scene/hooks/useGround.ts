@@ -1,4 +1,4 @@
-import { Mesh, MeshStandardMaterial, PlaneGeometry } from 'three';
+import * as THREE from 'three';
 import { GROUND_SIZE } from '../constants';
 
 // Константы только для земли
@@ -8,13 +8,13 @@ const GROUND_ROUGHNESS = 0.8;
 
 export const useGround = () => {
   const createGround = () => {
-    const groundGeometry = new PlaneGeometry(GROUND_SIZE, GROUND_SIZE);
-    const groundMaterial = new MeshStandardMaterial({
+    const groundGeometry = new THREE.PlaneGeometry(GROUND_SIZE, GROUND_SIZE);
+    const groundMaterial = new THREE.MeshStandardMaterial({
       color: GROUND_COLOR,
       metalness: GROUND_METALNESS,
       roughness: GROUND_ROUGHNESS
     });
-    const ground = new Mesh(groundGeometry, groundMaterial);
+    const ground = new THREE.Mesh(groundGeometry, groundMaterial);
     ground.rotation.x = -Math.PI / 2;
     ground.receiveShadow = true;
     return ground;

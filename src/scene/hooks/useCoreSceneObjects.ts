@@ -1,24 +1,24 @@
-import { WebGLRenderer, PerspectiveCamera, Scene, PCFSoftShadowMap, ACESFilmicToneMapping, SRGBColorSpace } from 'three';
+import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 export const useCoreSceneObjects = () => {
-  let renderer: WebGLRenderer | null = null;
-  let camera: PerspectiveCamera | null = null;
+  let renderer: THREE.WebGLRenderer | null = null;
+  let camera: THREE.PerspectiveCamera | null = null;
   let controls: OrbitControls | null = null;
 
   const create = (canvas: HTMLCanvasElement) => {
     // Renderer
-    renderer = new WebGLRenderer({ canvas, antialias: true });
+    renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
     renderer.setClearColor('#e0e7ef');
     renderer.setSize(canvas.clientWidth, canvas.clientHeight, false);
     renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = PCFSoftShadowMap;
-    renderer.toneMapping = ACESFilmicToneMapping;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.2;
-    renderer.outputColorSpace = SRGBColorSpace;
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
 
     // Camera
-    camera = new PerspectiveCamera(60, canvas.clientWidth / canvas.clientHeight, 0.1, 100);
+    camera = new THREE.PerspectiveCamera(60, canvas.clientWidth / canvas.clientHeight, 0.1, 100);
     camera.position.set(-3.5, 3.03, -2.5);
     camera.lookAt(0, 0, 0);
 

@@ -1,4 +1,4 @@
-import { Mesh, MeshStandardMaterial, CanvasTexture, ClampToEdgeWrapping, BoxGeometry, Vector3 } from 'three';
+import * as THREE from 'three';
 import boxTextureUrl from '../../assets/box.png';
 import { CUBE_SIZE, CUBE_POSITION } from '../constants';
 
@@ -8,7 +8,7 @@ const OUTLINE_BORDER = 12;
 
 export const useCube = () => {
   const createCube = () => {
-    const faceMaterials: MeshStandardMaterial[] = [];
+    const faceMaterials: THREE.MeshStandardMaterial[] = [];
     
     // Создаём материалы для каждой грани
     for (let face = 0; face < 6; face++) {
@@ -41,10 +41,10 @@ export const useCube = () => {
           }
           ctx.stroke();
           ctx.restore();
-          const outlineTexture = new CanvasTexture(outlineCanvas);
-          outlineTexture.wrapS = ClampToEdgeWrapping;
-          outlineTexture.wrapT = ClampToEdgeWrapping;
-          faceMaterials[face] = new MeshStandardMaterial({
+          const outlineTexture = new THREE.CanvasTexture(outlineCanvas);
+          outlineTexture.wrapS = THREE.ClampToEdgeWrapping;
+          outlineTexture.wrapT = THREE.ClampToEdgeWrapping;
+          faceMaterials[face] = new THREE.MeshStandardMaterial({
             metalness: 0.2,
             roughness: 0.6,
             map: outlineTexture
@@ -55,8 +55,8 @@ export const useCube = () => {
     }
     
     // Создаём куб с материалами
-    const geometry = new BoxGeometry(CUBE_SIZE, CUBE_SIZE, CUBE_SIZE);
-    const cube = new Mesh(geometry, faceMaterials);
+    const geometry = new THREE.BoxGeometry(CUBE_SIZE, CUBE_SIZE, CUBE_SIZE);
+    const cube = new THREE.Mesh(geometry, faceMaterials);
     cube.position.set(...CUBE_POSITION);
     cube.castShadow = true;
     cube.receiveShadow = true;
@@ -65,7 +65,7 @@ export const useCube = () => {
   };
 
   const moveCube = (
-    cube: Mesh,
+    cube: THREE.Mesh,
     direction: string,
     options?: {
       groundSize: number,
@@ -113,7 +113,7 @@ export const useCube = () => {
   };
 
   const teleportCube = (
-    cube: Mesh,
+    cube: THREE.Mesh,
     options?: {
       groundSize: number,
       cubeSize: number,
