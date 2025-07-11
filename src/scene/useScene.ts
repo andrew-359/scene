@@ -7,6 +7,7 @@ import { useEyeLight } from './hooks/useEyeLight';
 import { useCoreSceneObjects } from './hooks/useCoreSceneObjects';
 import { useLighting } from './hooks/useLighting';
 import { useDoor } from './hooks/useDoor';
+import { useMirrorCube } from './hooks/useMirrorCube';
 import { GROUND_SIZE, CUBE_SIZE, SPHERE_CENTER, LIGHT_SPHERE2_RADIUS } from './constants';
 
 export interface UseScene {
@@ -16,6 +17,7 @@ export interface UseScene {
   toggleEyeLight: () => void;
   moveCube: (direction: string) => void;
   teleportCube: () => void;
+  setDoorSize: ({ width, height }: { width: number, height: number }) => void;
 }
 
 // Тип для конфига куба
@@ -51,6 +53,7 @@ type SceneRefs = {
   directionalLight: THREE.DirectionalLight | null;
   pointLight: THREE.PointLight | null;
   door: any;
+  mirrorCube: any;
 };
 
 export const useScene = () => {
@@ -72,6 +75,7 @@ export const useScene = () => {
     directionalLight: null,
     pointLight: null,
     door: null,
+    mirrorCube: null,
   };
 
   const { init, toggle } = useLighting();
@@ -80,6 +84,7 @@ export const useScene = () => {
   const { createSky }  = useSky();
   const { createGround } = useGround();
   const { createDoor } = useDoor();
+  const { createMirrorCube } = useMirrorCube();
 
   // --- Ограничения движения куба ---
   const cubeMovementLimits = {
@@ -127,12 +132,20 @@ export const useScene = () => {
     sceneRefs.scene.add(door);
     sceneRefs.door = door;
 
+    // создаем зеркальный куб
+    const mirrorCubeObj = createMirrorCube([2.5, 0.5, 0], 1);
+    sceneRefs.scene.add(mirrorCubeObj.group);
+    sceneRefs.mirrorCube = mirrorCubeObj;
+
     // --- Запуск анимационного цикла ---
     const animate = () => {
+      if (sceneRefs.mirrorCube && sceneRefs.renderer && sceneRefs.scene) {
+        sceneRefs.mirrorCube.update(sceneRefs.renderer, sceneRefs.scene);
+      }
+      if (sceneRefs.controls) sceneRefs.controls.update();
       if (sceneRefs.renderer && sceneRefs.scene && sceneRefs.camera) {
         sceneRefs.renderer.render(sceneRefs.scene, sceneRefs.camera);
       }
-      
       animationId = requestAnimationFrame(animate);
     }
     animate();
@@ -159,11 +172,18 @@ export const useScene = () => {
     eyeLight.toggle();
   };
 
+  const setDoorSize = ({ width, height }: { width: number, height: number }) => {
+    if (sceneRefs.door && typeof sceneRefs.door.setSize === 'function') {
+      sceneRefs.door.setSize({ width, height });
+    }
+  };
+
   return {
     mount,
     toggleAmbientLight,
     toggleEyeLight,
     moveCube,
     teleportCube,
+    setDoorSize,
   };
 };
