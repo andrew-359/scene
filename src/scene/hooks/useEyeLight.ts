@@ -1,14 +1,14 @@
-import * as THREE from 'three';
+import { Mesh, MeshStandardMaterial, MeshBasicMaterial, CanvasTexture, ClampToEdgeWrapping, SphereGeometry, PointLight, Vector3 } from 'three';
 import { EYE_SPHERE_RADIUS, EYE_SPHERE_SCALE, LIGHT_SPHERE_RADIUS, LIGHT_SPHERE2_RADIUS, LIGHT_SPHERE2_Y_OFFSET } from '../constants';
 
 export const useEyeLight = () => {
   // --- Глаз (овал с градиентом) ---
   // Использую импортированные константы напрямую
 
-  let sphere: THREE.Mesh | null = null;
-  let lightSphere: THREE.Mesh | null = null;
-  let lightSphere2: THREE.Mesh | null = null;
-  let pointLight: THREE.PointLight | null = null;
+  let sphere: Mesh | null = null;
+  let lightSphere: Mesh | null = null;
+  let lightSphere2: Mesh | null = null;
+  let pointLight: PointLight | null = null;
   let sceneRef: THREE.Scene | null = null;
   let isOn = false;
 

@@ -1,7 +1,7 @@
-import * as THREE from 'three';
+import { Mesh, MeshStandardMaterial, CanvasTexture, ClampToEdgeWrapping, RepeatWrapping, BoxGeometry, SphereGeometry, Group } from 'three';
 import { DOOR_SIZE, DOOR_POSITION } from '../constants';
 
-const createWoodTexture = (): THREE.Texture => {
+const createWoodTexture = (): CanvasTexture => {
   const width = 256;
   const height = 512;
   const canvas = document.createElement('canvas');
@@ -43,14 +43,14 @@ const createWoodTexture = (): THREE.Texture => {
     ctx.stroke();
   });
 
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.wrapS = THREE.RepeatWrapping;
-  texture.wrapT = THREE.RepeatWrapping;
+  const texture = new CanvasTexture(canvas);
+  texture.wrapS = RepeatWrapping;
+  texture.wrapT = RepeatWrapping;
   texture.repeat.set(1, 1);
   return texture;
 }
 
- const createBrownTexture = (): THREE.Texture => {
+ const createBrownTexture = (): CanvasTexture => {
   const size = 32;
   const canvas = document.createElement('canvas');
   canvas.width = size;
@@ -58,24 +58,24 @@ const createWoodTexture = (): THREE.Texture => {
   const ctx = canvas.getContext('2d')!;
   ctx.fillStyle = '#7a4a1a';
   ctx.fillRect(0, 0, size, size);
-  return new THREE.CanvasTexture(canvas);
+  return new CanvasTexture(canvas);
 }
 
 export const useDoor = () => {
   const createDoor = () => {
     // Дверь
-    const geometry = new THREE.BoxGeometry(DOOR_SIZE, DOOR_SIZE * 2, 0.2);
-    const material = new THREE.MeshStandardMaterial({ 
+    const geometry = new BoxGeometry(DOOR_SIZE, DOOR_SIZE * 2, 0.2);
+    const material = new MeshStandardMaterial({ 
       color: 0xffffff, 
       map: createWoodTexture(),
     });
-    const door = new THREE.Mesh(geometry, material);
+    const door = new Mesh(geometry, material);
     door.position.set(...DOOR_POSITION);
     door.castShadow = true;
     door.receiveShadow = true;
 
     // Косяки 
-    const frameMaterial = new THREE.MeshStandardMaterial({
+    const frameMaterial = new MeshStandardMaterial({
       color: 0x7a4a1a,
       map: createBrownTexture(),
     });
@@ -84,21 +84,21 @@ export const useDoor = () => {
     const frameHeight = DOOR_SIZE * 2 + frameThickness * 2;
     const frameWidth = DOOR_SIZE + frameThickness * 2;
     // Верхний косяк
-    const topGeom = new THREE.BoxGeometry(frameWidth, frameThickness, frameDepth);
-    const top = new THREE.Mesh(topGeom, frameMaterial);
+    const topGeom = new BoxGeometry(frameWidth, frameThickness, frameDepth);
+    const top = new Mesh(topGeom, frameMaterial);
     top.position.set(DOOR_POSITION[0], DOOR_POSITION[1] + DOOR_SIZE + frameThickness / 2, DOOR_POSITION[2]);
     // Нижний косяк
-    const bottom = new THREE.Mesh(topGeom, frameMaterial);
+    const bottom = new Mesh(topGeom, frameMaterial);
     bottom.position.set(DOOR_POSITION[0], DOOR_POSITION[1] - DOOR_SIZE - frameThickness / 2, DOOR_POSITION[2]);
     // Боковые косяки
-    const sideGeom = new THREE.BoxGeometry(frameThickness, frameHeight, frameDepth);
-    const left = new THREE.Mesh(sideGeom, frameMaterial);
+    const sideGeom = new BoxGeometry(frameThickness, frameHeight, frameDepth);
+    const left = new Mesh(sideGeom, frameMaterial);
     left.position.set(DOOR_POSITION[0] - (DOOR_SIZE / 2 + frameThickness / 2), DOOR_POSITION[1], DOOR_POSITION[2]);
-    const right = new THREE.Mesh(sideGeom, frameMaterial);
+    const right = new Mesh(sideGeom, frameMaterial);
     right.position.set(DOOR_POSITION[0] + (DOOR_SIZE / 2 + frameThickness / 2), DOOR_POSITION[1], DOOR_POSITION[2]);
 
     // Группа дверь+косяки
-    const group = new THREE.Group();
+    const group = new Group();
     group.add(door);
     group.add(top);
     group.add(bottom);
@@ -107,20 +107,20 @@ export const useDoor = () => {
 
     // Ручки
     const handleRadius = 0.09;
-    const handleMaterial = new THREE.MeshStandardMaterial({
+    const handleMaterial = new MeshStandardMaterial({
       color: 0xc0c0c0,
       metalness: 0.95,
       roughness: 0.25,
     });
     const yHandle = DOOR_POSITION[1] + 0.3;
     const xLeft = DOOR_POSITION[0] - DOOR_SIZE / 2 + handleRadius * 1.2;
-    const frontHandle = new THREE.Mesh(new THREE.SphereGeometry(handleRadius, 24, 24), handleMaterial);
+    const frontHandle = new Mesh(new SphereGeometry(handleRadius, 24, 24), handleMaterial);
     frontHandle.position.set(
       xLeft,
       yHandle,
       DOOR_POSITION[2] + 0.15
     );
-    const backHandle = new THREE.Mesh(new THREE.SphereGeometry(handleRadius, 24, 24), handleMaterial);
+    const backHandle = new Mesh(new SphereGeometry(handleRadius, 24, 24), handleMaterial);
     backHandle.position.set(
       xLeft,
       yHandle,

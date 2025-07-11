@@ -1,4 +1,4 @@
-import * as THREE from 'three';
+import { SphereGeometry, CanvasTexture, RepeatWrapping, MeshBasicMaterial, Mesh, BackSide } from 'three';
 
 // Константы только для неба
 const SKY_SEGMENTS_WIDTH = 16;
@@ -14,7 +14,7 @@ const SKY_RADIUS = 24; // Пример: радиус меньше земли
 
 export const useSky = () => {
   const createSky = () => {
-    const skyGeometry = new THREE.SphereGeometry(SKY_RADIUS, SKY_SEGMENTS_WIDTH, SKY_SEGMENTS_HEIGHT);
+    const skyGeometry = new SphereGeometry(SKY_RADIUS, SKY_SEGMENTS_WIDTH, SKY_SEGMENTS_HEIGHT);
     const skyCanvas = document.createElement('canvas');
     skyCanvas.width = SKY_SIZE;
     skyCanvas.height = SKY_SIZE;
@@ -38,14 +38,14 @@ export const useSky = () => {
       }
       skyCtx.globalAlpha = 1;
     }
-    const skyTexture = new THREE.CanvasTexture(skyCanvas);
-    skyTexture.wrapS = THREE.RepeatWrapping;
-    skyTexture.wrapT = THREE.RepeatWrapping;
-    const skyMaterial = new THREE.MeshBasicMaterial({
+    const skyTexture = new CanvasTexture(skyCanvas);
+    skyTexture.wrapS = RepeatWrapping;
+    skyTexture.wrapT = RepeatWrapping;
+    const skyMaterial = new MeshBasicMaterial({
       map: skyTexture,
-      side: THREE.BackSide
+      side: BackSide
     });
-    const skySphere = new THREE.Mesh(skyGeometry, skyMaterial);
+    const skySphere = new Mesh(skyGeometry, skyMaterial);
     skySphere.position.set(0, 0, 0);
     return skySphere;
   };
