@@ -5,6 +5,7 @@ import Loader from './Loader.vue';
 import Button from 'primevue/button';
 import SceneHints from './SceneHints.vue';
 import Slider from 'primevue/slider';
+import styles from './Scene.module.scss';
 
 const canvasRef = ref<HTMLCanvasElement | null>(null);
 const isLoading = ref(true);
@@ -13,6 +14,11 @@ const sceneInstance = ref<ReturnType<typeof useScene> | null>(null);
 // Слайдеры для двери
 const doorWidth = ref(1.5);
 const doorHeight = ref(3);
+
+const isMobile = ref(false);
+if (typeof window !== 'undefined') {
+  isMobile.value = window.matchMedia('(max-width: 700px)').matches;
+}
 
 function updateDoorSize() {
   if (sceneInstance.value && sceneInstance.value.setDoorSize) {
@@ -61,110 +67,53 @@ const teleportCube = () => {
 </script>
 
 <template>
-  <div class="scene-layout">
-    <div class="scene-wrapper">
+  <div :class="styles['scene-layout']">
+    <div :class="styles['scene-wrapper']">
       <canvas ref="canvasRef" style="width: 100%; height: 100%; display: block;"></canvas>
-      <Loader v-if="isLoading" class="loader-overlay" />
+      <Loader v-if="isLoading" :class="styles['loader-overlay']" />
       <!-- Кнопки управления освещением -->
-      <div class="light-controls">
+      <div :class="[styles['light-controls'], 'flex gap-2 md:gap-3 mt-4 md:mt-6 justify-center w-full']">
         <Button 
           @click="toggleAmbientLight" 
           icon="pi pi-sun" 
           label="Общий свет"
           severity="secondary"
-          class="light-btn"
+          size="small"
+          :class="'min-w-[120px] md:min-w-[180px] text-[0.95rem] md:text-base px-3 py-2 md:px-5 md:py-2 font-medium text-center'"
         />
         <Button 
           @click="toggleEyeLight" 
           icon="pi pi-eye" 
           label="Свет глаза"
           severity="secondary"
-          class="light-btn"
+          size="small"
+          :class="'min-w-[120px] md:min-w-[180px] text-[0.95rem] md:text-base px-3 py-2 md:px-5 md:py-2 font-medium text-center'"
         />
         <Button 
           @click="teleportCube" 
           icon="pi pi-refresh" 
           label="Телепорт куба"
           severity="secondary"
-          class="light-btn"
+          size="small"
+          :class="'min-w-[120px] md:min-w-[180px] text-[0.95rem] md:text-base px-3 py-2 md:px-5 md:py-2 font-medium text-center'"
         />
       </div>
+      <!-- Мобильные слайдеры -->
+      <div :class="[styles['door-sliders'], styles['mobile-only']]">
+        <div>Ширина двери: {{ doorWidth }}</div>
+        <Slider v-model="doorWidth" :min="0.5" :max="3" :step="0.01" @change="updateDoorSize" style="width: 100%;" />
+        <div>Высота двери: {{ doorHeight }}</div>
+        <Slider v-model="doorHeight" :min="1.5" :max="5" :step="0.01" @change="updateDoorSize" style="width: 100%;" />
+      </div>
     </div>
-    <div class="scene-sidebar">
-      <div class="door-sliders">
+    <div :class="[styles['scene-sidebar'], styles['desktop-only']]">
+      <div :class="styles['door-sliders']">
         <div>Ширина двери: {{ doorWidth }}</div>
         <Slider v-model="doorWidth" :min="0.5" :max="3" :step="0.01" @change="updateDoorSize" style="width: 220px;" />
         <div>Высота двери: {{ doorHeight }}</div>
         <Slider v-model="doorHeight" :min="1.5" :max="5" :step="0.01" @change="updateDoorSize" style="width: 220px;" />
       </div>
-      <SceneHints />
+      <SceneHints v-if="!isMobile" />
     </div>
   </div>
 </template>
-
-<style scoped>
-.scene-layout {
-  display: flex;
-  flex-direction: row;
-  align-items: stretch;
-  width: 100%;
-  box-sizing: border-box;
-  overflow: hidden;
-}
-.scene-wrapper {
-  flex: 1 1 0;
-  position: relative;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-}
-.scene-wrapper canvas {
-  flex: 1 1 0;
-  width: 100% !important;
-  height: 100% !important;
-  display: block;
-}
-.scene-sidebar {
-  width: 320px;
-  min-width: 220px;
-  max-width: 340px;
-  padding: 24px 0 24px 0;
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-  align-items: stretch;
-  overflow-y: auto;
-}
-.door-sliders {
-  background: #232323;
-  color: #fff;
-  border-radius: 10px;
-  padding: 16px 18px;
-  font-size: 1rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  align-items: flex-start;
-}
-.loader-overlay {
-  position: absolute;
-  inset: 0;
-  background: rgba(90,90,90,0.8);
-}
-
-.light-controls {
-  position: absolute;
-  top: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  gap: 12px;
-  z-index: 10;
-}
-
-.light-btn {
-  min-width: 140px;
-}
-</style>
