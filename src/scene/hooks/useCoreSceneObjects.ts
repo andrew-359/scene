@@ -5,6 +5,7 @@ export const useCoreSceneObjects = () => {
   let renderer: THREE.WebGLRenderer | null = null;
   let camera: THREE.PerspectiveCamera | null = null;
   let controls: OrbitControls | null = null;
+  let scene: THREE.Scene | null = null;
 
   const create = (canvas: HTMLCanvasElement) => {
     // Renderer
@@ -32,14 +33,29 @@ export const useCoreSceneObjects = () => {
     controls.maxPolarAngle = Math.PI / 2;
     controls.target.set(0, 1, 0);
 
-    return {
-      renderer,
-      camera,
-      controls
-    }
+    scene = new THREE.Scene();
+  };
+
+  const getRenderer = () => renderer;
+  const getCamera = () => camera;
+  const getControls = () => controls;
+  const getScene = () => scene;
+
+  const dispose = () => {
+    renderer?.dispose();
+    controls?.dispose();
+    renderer = null;
+    camera = null;
+    controls = null;
+    scene = null;
   };
 
   return {
     create,
+    getRenderer,
+    getCamera,
+    getControls,
+    getScene,
+    dispose,
   };
 }; 

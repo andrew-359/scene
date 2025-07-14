@@ -1,19 +1,17 @@
 import * as THREE from 'three';
-import { EYE_SPHERE_RADIUS, EYE_SPHERE_SCALE, LIGHT_SPHERE_RADIUS, LIGHT_SPHERE2_RADIUS, LIGHT_SPHERE2_Y_OFFSET } from '../constants';
+import { EYE_SPHERE_RADIUS, EYE_SPHERE_SCALE, LIGHT_SPHERE_RADIUS, LIGHT_SPHERE2_RADIUS, LIGHT_SPHERE2_Y_OFFSET } from '../constants/main';
 
 export const useEyeLight = () => {
-  // --- Глаз (овал с градиентом) ---
-  // Использую импортированные константы напрямую
-
+  let group: THREE.Group | null = null;
   let sphere: THREE.Mesh | null = null;
   let lightSphere: THREE.Mesh | null = null;
   let lightSphere2: THREE.Mesh | null = null;
   let pointLight: THREE.PointLight | null = null;
-  let sceneRef: THREE.Scene | null = null;
-  let isOn = false;
+  let isOn = true;
 
-  // Создать все объекты света глаза
   const create = () => {
+    if (group) return;
+    group = new THREE.Group();
     // --- Глаз ---
     const sphereGeometry = new THREE.SphereGeometry(EYE_SPHERE_RADIUS, 26, 90, 4);
     const gradSize = 256;
@@ -47,6 +45,7 @@ export const useEyeLight = () => {
     sphere.position.set(2.0, 1.9, 1.4);
     sphere.scale.set(EYE_SPHERE_SCALE.x, EYE_SPHERE_SCALE.y, EYE_SPHERE_SCALE.z);
     sphere.castShadow = false;
+    group.add(sphere);
 
     // --- Прозрачная сфера вокруг глаза ---
     const lightSphereGeometry = new THREE.SphereGeometry(LIGHT_SPHERE_RADIUS, 15, 15);
@@ -78,6 +77,7 @@ export const useEyeLight = () => {
     lightSphere = new THREE.Mesh(lightSphereGeometry, lightSphereMaterial);
     lightSphere.position.copy(sphere.position);
     lightSphere.castShadow = true;
+    group.add(lightSphere);
 
     // --- Вторая невидимая сфера для света ---
     const lightSphere2Geometry = new THREE.SphereGeometry(LIGHT_SPHERE2_RADIUS, 20, 20);
@@ -85,53 +85,23 @@ export const useEyeLight = () => {
     lightSphere2 = new THREE.Mesh(lightSphere2Geometry, lightSphere2Material);
     lightSphere2.position.copy(sphere.position);
     lightSphere2.position.y += LIGHT_SPHERE2_Y_OFFSET;
+    group.add(lightSphere2);
 
     // --- Точечный источник света (глаз) ---
     pointLight = new THREE.PointLight(0xffffff, 10, 40);
     pointLight.castShadow = true;
+    pointLight.position.copy(lightSphere2.position);
   };
 
-  const addSpheres = () => {
-    if (!sceneRef || !sphere || !lightSphere || !lightSphere2) return;
-    sceneRef.add(sphere);
-    sceneRef.add(lightSphere);
-    sceneRef.add(lightSphere2);
-  };
+  const getGroup = () => group;
+  const getLight = () => pointLight;
+  const getIsOn = () => isOn
 
-  // Добавить объекты в сцену
-  const addLight = () => {
-    if (!sceneRef || !pointLight) return;
-    sceneRef.add(pointLight);
-  };
-
-  // Убрать объекты из сцены
-  const removeLight = () => {
-    if (!sceneRef  || !pointLight) return;
-    sceneRef.remove(pointLight);
-  };
-
-  // Инициализация: создаём объекты и добавляем в сцену (по умолчанию включено)
-  const init = (scene: THREE.Scene) => {
-    sceneRef = scene;
-    if (!sphere) create();
-    addLight();
-    addSpheres();
-    isOn = true;
-  };
-
-  // Переключить свет от глаза
   const toggle = () => {
-    if (!sceneRef) return;
-    if (isOn) {
-      removeLight();
-      isOn = false;
-    } else {
-      addLight();
-      isOn = true;
-    }
+    isOn = !isOn;
+    // Вся логика добавления/удаления — в useScene
   };
 
-  // Метод для синхронизации позиции PointLight
   const syncPosition = (position: THREE.Vector3) => {
     if (!lightSphere2 || !pointLight) return;
     const eyeCenter = lightSphere2.position.clone();
@@ -140,9 +110,35 @@ export const useEyeLight = () => {
     pointLight.position.copy(pointLightPos);
   };
 
+  const dispose = () => {
+    if (group) {
+      group.clear();
+    }
+    [sphere, lightSphere, lightSphere2].forEach(obj => {
+      if (obj) {
+        obj.geometry.dispose();
+        if (Array.isArray(obj.material)) {
+          obj.material.forEach(m => m.dispose());
+        } else {
+          obj.material.dispose();
+        }
+      }
+    });
+    if (pointLight) pointLight.dispose();
+    group = null;
+    sphere = null;
+    lightSphere = null;
+    lightSphere2 = null;
+    pointLight = null;
+  };
+
   return {
-    init,
+    create,
+    getGroup,
+    getLight,
     toggle,
     syncPosition,
+    dispose,
+    getIsOn
   };
 }; 

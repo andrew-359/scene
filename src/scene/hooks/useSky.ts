@@ -13,7 +13,9 @@ const SKY_COLOR = '#01030a';
 const SKY_RADIUS = 24; // Пример: радиус меньше земли
 
 export const useSky = () => {
-  const createSky = () => {
+  let sky: THREE.Mesh | null = null;
+
+  const create = () => {
     const skyGeometry = new THREE.SphereGeometry(SKY_RADIUS, SKY_SEGMENTS_WIDTH, SKY_SEGMENTS_HEIGHT);
     const skyCanvas = document.createElement('canvas');
     skyCanvas.width = SKY_SIZE;
@@ -47,10 +49,19 @@ export const useSky = () => {
     });
     const skySphere = new THREE.Mesh(skyGeometry, skyMaterial);
     skySphere.position.set(0, 0, 0);
-    return skySphere;
+    sky = skySphere;
+    return sky;
+  };
+
+  const get = () => sky;
+
+  const dispose = () => {
+    sky = null;
   };
 
   return {
-    createSky
+    create,
+    get,
+    dispose,
   };
 }; 

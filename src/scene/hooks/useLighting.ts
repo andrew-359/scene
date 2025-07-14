@@ -3,57 +3,62 @@ import * as THREE from 'three';
 export const useLighting = () => {
   let ambientLight: THREE.AmbientLight | null = null;
   let directionalLight: THREE.DirectionalLight | null = null;
-  let isLightOn = false; // по умолчанию свет выключен
-  let sceneRef: THREE.Scene | null = null;
+  let isLightOn = false;
 
-  // Инициализация: сохраняем сцену, свет не включаем
-  const init = (scene: THREE.Scene) => {
-    sceneRef = scene;
-  };
-
-  // Включить свет
-  const createLighting = () => {
-    if (!sceneRef) return;
-    if (ambientLight || directionalLight) return; // уже включен
+  const create = () => {
+    if (ambientLight || directionalLight) return;
     ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
     directionalLight = new THREE.DirectionalLight(0xffffff, 1);
     directionalLight.position.set(5, 5, 5);
     directionalLight.castShadow = true;
-    directionalLight.shadow.mapSize.width = 1024;
-    directionalLight.shadow.mapSize.height = 1024;
-    sceneRef.add(ambientLight);
-    sceneRef.add(directionalLight);
+    directionalLight.shadow.mapSize.width = 2048;
+    directionalLight.shadow.mapSize.height = 2048;
+    const d = 15;
+    directionalLight.shadow.camera.left = -d;
+    directionalLight.shadow.camera.right = d;
+    directionalLight.shadow.camera.top = d;
+    directionalLight.shadow.camera.bottom = -d;
+    directionalLight.shadow.camera.near = 0.1;
+    directionalLight.shadow.camera.far = 50;
   };
 
-  // Выключить свет
-  const destroyLighting = () => {
-    if (!sceneRef) return;
-    if (ambientLight) {
-      sceneRef.remove(ambientLight);
-      ambientLight.dispose();
-      ambientLight = null;
-    }
-    if (directionalLight) {
-      sceneRef.remove(directionalLight);
-      directionalLight.dispose();
-      directionalLight = null;
-    }
+  const getAmbient = () => ambientLight;
+  const getDirectional = () => directionalLight;
+  const getState = () => isLightOn;
+
+  const dispose = () => {
+    ambientLight?.dispose();
+    directionalLight?.dispose();
+    ambientLight = null;
+    directionalLight = null;
+    isLightOn = false;
   };
 
-  // Переключить свет
   const toggle = () => {
-    if (!sceneRef) return;
-    if (isLightOn) {
-      destroyLighting();
-      isLightOn = false;
-    } else {
-      createLighting();
-      isLightOn = true;
-    }
+    const add: THREE.Object3D[] = [];
+    const remove: THREE.Object3D[] = [];
+
+    isLightOn ? 
+    (() => {
+      if (ambientLight) remove.push(ambientLight);
+      if (directionalLight) remove.push(directionalLight);
+      dispose();
+    })() : 
+    (() => {
+      create();
+      if (ambientLight) add.push(ambientLight);
+      if (directionalLight) add.push(directionalLight);
+    })()
+
+    return { add, remove };
   };
 
   return {
-    init,
-    toggle
+    create,
+    getAmbient,
+    getDirectional,
+    getState,
+    dispose,
+    toggle,
   };
 }; 

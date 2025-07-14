@@ -1,109 +1,50 @@
 import * as THREE from 'three';
 import boxTextureUrl from '../../assets/box.png';
-import { CUBE_SIZE, CUBE_POSITION } from '../constants';
+import { CUBE_SIZE, CUBE_POSITION } from '../constants/main';
+import { getCubeFaceMaterials } from '../utils/materials';
+import { getNewPosition } from '../utils/movment'
+
+export type CubeMovementLimits = {
+  groundSize: number;
+  cubeSize: number;
+  sphereCenter: { x: number; y: number; z: number };
+  minDistance: number;
+  maxDistance: number;
+};
 
 // Константы только для куба
 const FACE_TEXTURE_SIZE = 256;
 const OUTLINE_BORDER = 12;
 
 export const useCube = () => {
-  const createCube = () => {
-    const faceMaterials: THREE.MeshStandardMaterial[] = [];
-    
-    // Создаём материалы для каждой грани
-    for (let face = 0; face < 6; face++) {
-      const outlineCanvas = document.createElement('canvas');
-      outlineCanvas.width = FACE_TEXTURE_SIZE;
-      outlineCanvas.height = FACE_TEXTURE_SIZE;
-      const ctx = outlineCanvas.getContext('2d');
-      if (ctx) {
-        const img = new window.Image();
-        img.onload = () => {
-          ctx.drawImage(img, 0, 0, FACE_TEXTURE_SIZE, FACE_TEXTURE_SIZE);
-          ctx.fillStyle = '#000';
-          ctx.fillRect(0, 0, FACE_TEXTURE_SIZE, OUTLINE_BORDER);
-          ctx.fillRect(0, FACE_TEXTURE_SIZE - OUTLINE_BORDER, FACE_TEXTURE_SIZE, OUTLINE_BORDER);
-          ctx.fillRect(0, 0, OUTLINE_BORDER, FACE_TEXTURE_SIZE);
-          ctx.fillRect(FACE_TEXTURE_SIZE - OUTLINE_BORDER, 0, OUTLINE_BORDER, FACE_TEXTURE_SIZE);
-          ctx.save();
-          ctx.strokeStyle = '#000';
-          ctx.lineWidth = 7;
-          ctx.beginPath();
-          const startX = Math.random() * (FACE_TEXTURE_SIZE - 80) + 40;
-          const startY = Math.random() * (FACE_TEXTURE_SIZE - 80) + 40;
-          ctx.moveTo(startX, startY);
-          for (let j = 0; j < 4; j++) {
-            const cp1x = startX + Math.random() * 100 - 50;
-            const cp1y = startY + Math.random() * 100 - 50;
-            const endX = startX + Math.random() * 120 - 60;
-            const endY = startY + Math.random() * 120 - 60;
-            ctx.bezierCurveTo(cp1x, cp1y, cp1x, cp1y, endX, endY);
-          }
-          ctx.stroke();
-          ctx.restore();
-          const outlineTexture = new THREE.CanvasTexture(outlineCanvas);
-          outlineTexture.wrapS = THREE.ClampToEdgeWrapping;
-          outlineTexture.wrapT = THREE.ClampToEdgeWrapping;
-          faceMaterials[face] = new THREE.MeshStandardMaterial({
-            metalness: 0.2,
-            roughness: 0.6,
-            map: outlineTexture
-          });
-        };
-        img.src = boxTextureUrl;
-      }
-    }
-    
-    // Создаём куб с материалами
-    const geometry = new THREE.BoxGeometry(CUBE_SIZE, CUBE_SIZE, CUBE_SIZE);
-    const cube = new THREE.Mesh(geometry, faceMaterials);
+  let cube: THREE.Mesh | null = null;
+
+  const create = () => {
+    const faceMaterials = getCubeFaceMaterials(boxTextureUrl, FACE_TEXTURE_SIZE, OUTLINE_BORDER);
+    cube = new THREE.Mesh(
+      new THREE.BoxGeometry(CUBE_SIZE, CUBE_SIZE, CUBE_SIZE),
+      faceMaterials
+    );
     cube.position.set(...CUBE_POSITION);
     cube.castShadow = true;
     cube.receiveShadow = true;
-    
     return cube;
   };
 
-  const moveCube = (
-    cube: THREE.Mesh,
+  const get = () => cube;
+
+  const move = (
     direction: string,
-    options?: {
-      groundSize: number,
-      cubeSize: number,
-      sphereCenter: { x: number, y: number, z: number },
-      minDistance: number,
-      maxDistance: number
-    }
+    limits: CubeMovementLimits
   ) => {
     if (!cube) return;
     const step = 1;
-    // Копируем текущую позицию
-    const newPos = cube.position.clone();
-    switch (direction) {
-      case 'left':
-        newPos.x -= step;
-        break;
-      case 'right':
-        newPos.x += step;
-        break;
-      case 'forward':
-        newPos.z -= step;
-        break;
-      case 'back':
-        newPos.z += step;
-        break;
-    }
-    // Если нет ограничений — просто двигаем
-    if (!options) {
-      cube.position.copy(newPos);
-      return;
-    }
-    const { groundSize, cubeSize, sphereCenter, minDistance, maxDistance } = options;
-    // Ограничение по земле
+    // Новая позиция через lookup-таблицу
+    const newPos = getNewPosition(direction, cube.position, step);
+    const { groundSize, cubeSize, sphereCenter, minDistance, maxDistance } = limits;
     const halfGround = groundSize / 2 - cubeSize / 2;
     newPos.x = Math.max(-halfGround, Math.min(halfGround, newPos.x));
     newPos.z = Math.max(-halfGround, Math.min(halfGround, newPos.z));
-    // Ограничение по расстоянию до сферы
     const dx = newPos.x - sphereCenter.x;
     const dz = newPos.z - sphereCenter.z;
     const dist = Math.sqrt(dx * dx + dz * dz);
@@ -112,45 +53,41 @@ export const useCube = () => {
     cube.position.copy(newPos);
   };
 
-  const teleportCube = (
-    cube: THREE.Mesh,
-    options?: {
-      groundSize: number,
-      cubeSize: number,
-      sphereCenter: { x: number, y: number, z: number },
-      minDistance: number,
-      maxDistance: number
-    }
+  const teleport = (
+    limits: CubeMovementLimits
   ) => {
     if (!cube) return;
-    if (!options) {
-      const range = 20;
-      cube.position.x = (Math.random() - 0.5) * range;
-      cube.position.z = (Math.random() - 0.5) * range;
-      return;
-    }
-    const { groundSize, cubeSize, sphereCenter, minDistance, maxDistance } = options;
+    const { groundSize, cubeSize, sphereCenter, minDistance, maxDistance } = limits;
     const halfGround = groundSize / 2 - cubeSize / 2;
-    let tries = 0;
-    //TODO
-    while (tries < 100) {
+    for (let tries = 0; tries < 30; tries++) {
       const x = Math.random() * (halfGround * 2) - halfGround;
       const z = Math.random() * (halfGround * 2) - halfGround;
+      const pos = new THREE.Vector3(x, cube.position.y, z);
       const dx = x - sphereCenter.x;
       const dz = z - sphereCenter.z;
       const dist = Math.sqrt(dx * dx + dz * dz);
-      if (dist >= minDistance && dist <= maxDistance) {
-        cube.position.x = x;
-        cube.position.z = z;
-        return;
-      }
-      tries++;
+      if (dist < minDistance) continue;
+      if (dist > maxDistance) continue;
+      cube.position.copy(pos);
+      return;
     }
   };
 
+  const getCoordinates = () => {
+    if (!cube) return null;
+    return cube.position.clone();
+  };
+
+  const dispose = () => {
+    cube = null;
+  };
+
   return {
-    createCube,
-    moveCube,
-    teleportCube,
+    create,
+    get,
+    move,
+    teleport,
+    getCoordinates,
+    dispose,
   };
 }; 
