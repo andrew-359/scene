@@ -1,18 +1,16 @@
 import { BoxGeometry, Mesh, MeshPhysicalMaterial, Group, CubeCamera, WebGLRenderer, Scene, WebGLCubeRenderTarget } from 'three';
 
-export interface MirrorCube {
-  group: Group;
-  cubeCamera: CubeCamera;
-  update: (renderer: WebGLRenderer, scene: Scene) => void;
-}
-
 export const useMirrorCube = () => {
-  const createMirrorCube = (position: [number, number, number] = [-2, 0.5, -2], size = 1): MirrorCube => {
-    // CubeCamera для динамического отражения
+  let group: Group | null = null;
+  let cube: Mesh | null = null;
+  let cubeCamera: CubeCamera | null = null;
+  let update: ((renderer: WebGLRenderer, scene: Scene) => void) | null = null;
+
+  const create = (position: [number, number, number], size = 1) => {
+    if (group) return;
     const renderTarget = new WebGLCubeRenderTarget(256);
-    const cubeCamera = new CubeCamera(0.1, 100, renderTarget);
+    cubeCamera = new CubeCamera(0.1, 100, renderTarget);
     cubeCamera.position.set(...position);
-    // Максимально зеркальный материал
     const mirrorMaterial = new MeshPhysicalMaterial({
       color: 0xffffff,
       metalness: 1,
@@ -23,26 +21,47 @@ export const useMirrorCube = () => {
       envMap: cubeCamera.renderTarget.texture,
       envMapIntensity: 1,
     });
-    // Основной куб
     const geometry = new BoxGeometry(size, size, size);
-    const cube = new Mesh(geometry, mirrorMaterial);
+    cube = new Mesh(geometry, mirrorMaterial);
     cube.position.set(...position);
     cube.castShadow = true;
     cube.receiveShadow = true;
-    // Группа
-    const group = new Group();
+    group = new Group();
     group.add(cube);
     group.add(cubeCamera);
-    // Функция обновления отражения
-    const update = (renderer: WebGLRenderer, scene: Scene) => {
+    update = (renderer: WebGLRenderer, scene: Scene) => {
+      if (!cube || !cubeCamera) return;
       cube.visible = false;
       cubeCamera.update(renderer, scene);
       cube.visible = true;
     };
-    return { group, cubeCamera, update };
+  };
+
+  const getGroup = () => group;
+  const getCamera = () => cubeCamera;
+  const getUpdate = () => update;
+
+  const dispose = () => {
+    if (group) group.clear();
+    if (cube) {
+      cube.geometry.dispose();
+      if (Array.isArray(cube.material)) {
+        cube.material.forEach(m => m.dispose());
+      } else {
+        cube.material.dispose();
+      }
+    }
+    group = null;
+    cube = null;
+    cubeCamera = null;
+    update = null;
   };
 
   return {
-    createMirrorCube,
+    create,
+    getGroup,
+    getCamera,
+    getUpdate,
+    dispose,
   };
 }; 

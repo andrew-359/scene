@@ -9,6 +9,8 @@ import DoorSizeControl from './DoorSizeControl.vue';
 const canvasRef = ref<HTMLCanvasElement | null>(null);
 const isLoading = ref(true);
 const sceneInstance = ref<ReturnType<typeof useScene> | null>(null);
+  //TODO in progress 
+  //need more encapsulation and some vars to config
 
 const handleKeyDown = (e: KeyboardEvent) => {
     if (!sceneInstance.value) return;
@@ -22,12 +24,6 @@ const isMobile = ref(false);
 
 if (typeof window !== 'undefined') {
   isMobile.value = window.matchMedia('(max-width: 700px)').matches;
-}
-
-function onDoorSizeUpdate({ width, height }: { width: number; height: number }) {
-  if (sceneInstance.value && sceneInstance.value.setDoorSize) {
-    sceneInstance.value.setDoorSize({ width, height });
-  }
 }
 
 const mount = () => {
@@ -52,6 +48,10 @@ onBeforeUnmount(() => {
     window.removeEventListener('keydown', handleKeyDown);
     sceneInstance.value?.destroy();
 });
+
+const onDoorSizeUpdate = ({ width, height }: { width: number; height: number }) => {
+  sceneInstance.value?.setDoorSize({ width, height });
+}
 
 const toggleAmbientLight = () => {
   sceneInstance.value?.toggleAmbientLight();

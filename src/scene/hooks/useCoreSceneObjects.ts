@@ -20,7 +20,7 @@ export const useCoreSceneObjects = () => {
 
     // Camera
     camera = new THREE.PerspectiveCamera(60, canvas.clientWidth / canvas.clientHeight, 0.1, 100);
-    camera.position.set(-3.5, 3.03, -2.5);
+    camera.position.set(-2.9, 8, -8.6);
     camera.lookAt(0, 0, 0);
 
     // Controls
@@ -32,6 +32,12 @@ export const useCoreSceneObjects = () => {
     controls.minPolarAngle = 0.3;
     controls.maxPolarAngle = Math.PI / 2;
     controls.target.set(0, 1, 0);
+
+    // Ограничение радиуса камеры
+    const SKY_RADIUS = 24; 
+    const SKY_MARGIN = 0.5;
+    controls.maxDistance = SKY_RADIUS - SKY_MARGIN;
+    controls.minDistance = 2; 
 
     scene = new THREE.Scene();
   };

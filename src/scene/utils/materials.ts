@@ -1,4 +1,4 @@
-import { MeshStandardMaterial, CanvasTexture } from 'three';
+import { MeshStandardMaterial, CanvasTexture, RepeatWrapping } from 'three';
 
 
 export const getCubeFaceMaterials = (boxTextureUrl: string, FACE_TEXTURE_SIZE: number, OUTLINE_BORDER: number): MeshStandardMaterial[] => {
@@ -48,3 +48,63 @@ export const getCubeFaceMaterials = (boxTextureUrl: string, FACE_TEXTURE_SIZE: n
     
     return faceMaterials;
   }
+
+export function createCartoonWoodMaterial(width = 256, height = 512) {
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d')!;
+
+  // Светлый фон
+  ctx.fillStyle = '#e6c89f'; // светло-бежевый
+  ctx.fillRect(0, 0, width, height);
+
+  ctx.strokeStyle = '#b98c5a';
+  ctx.lineWidth = 6;
+  ctx.globalAlpha = 0.25;
+  for (let i = 0; i < 18; i++) {
+    ctx.beginPath();
+    const y = (i / 18) * height;
+    ctx.moveTo(0, y);
+    for (let x = 0; x < width; x++) {
+      ctx.lineTo(x, y + Math.sin(x / 30 + i) * 7);
+    }
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+
+  const knots = [
+    { x: 0.2, y: 0.3, r: 18, angle: 0.2 },
+    { x: 0.4, y: 0.7, r: 14, angle: 0.7 },
+    { x: 0.6, y: 0.5, r: 16, angle: 1.1 },
+    { x: 0.8, y: 0.2, r: 12, angle: 0.5 },
+    { x: 0.7, y: 0.8, r: 15, angle: 0.9 },
+  ];
+  for (const knot of knots) {
+    const knotX = knot.x * width;
+    const knotY = knot.y * height;
+    const knotR = knot.r;
+    ctx.save();
+    ctx.globalAlpha = 0.5;
+    ctx.beginPath();
+    ctx.ellipse(knotX, knotY, knotR, knotR * 0.9, knot.angle, 0, Math.PI * 2);
+    ctx.fillStyle = '#b98c5a';
+    ctx.fill();
+    ctx.globalAlpha = 0.7;
+    ctx.beginPath();
+    ctx.ellipse(knotX, knotY, knotR * 0.5, knotR * 0.3, knot.angle + 0.5, 0, Math.PI * 2);
+    ctx.fillStyle = '#a67c52';
+    ctx.fill();
+    ctx.restore();
+  }
+
+  const texture = new CanvasTexture(canvas);
+  texture.wrapS = texture.wrapT = 1000; // ClampToEdgeWrapping
+  texture.repeat.set(1, 1);
+
+  return new MeshStandardMaterial({
+    map: texture,
+    roughness: 0.5,
+    metalness: 0.15
+  });
+}

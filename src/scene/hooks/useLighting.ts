@@ -43,11 +43,13 @@ export const useLighting = () => {
       if (ambientLight) remove.push(ambientLight);
       if (directionalLight) remove.push(directionalLight);
       dispose();
+      isLightOn = false
     })() : 
     (() => {
       create();
       if (ambientLight) add.push(ambientLight);
       if (directionalLight) add.push(directionalLight);
+      isLightOn = true
     })()
 
     return { add, remove };

@@ -8,11 +8,11 @@ import { useLighting } from './useLighting';
 import { useDoor } from './useDoor';
 import { useMirrorCube } from './useMirrorCube';
 import { cubeMovementLimits } from '../constants/main';
+import { DOOR_SIZE, DOOR_POSITION } from '../constants/main';
+import useLogger from './useLogger';
 
 export const useScene = () => {
   let animationId: number | null = null;
-  let minAreaMesh: THREE.Mesh | null = null;
-  let maxAreaMesh: THREE.Mesh | null = null;
 
   const core = useCoreSceneObjects();
   const sky = useSky();
@@ -23,6 +23,7 @@ export const useScene = () => {
   const door = useDoor();
   const mirror = useMirrorCube();
 
+  // non-null assertion - потому что инструкция очень простая и можно позволить сэкономить на количестве кода
   // --- mount: инициализация сцены и всех объектов ---
   const mount = (canvas: HTMLCanvasElement) => {
     // Сцена
@@ -32,74 +33,54 @@ export const useScene = () => {
 
     // Небо
     sky.create();
-    const skyObj = sky.get();
-    if (skyObj) scene.add(skyObj);
+    scene.add(sky.get()!);
 
     // Земля
     ground.create();
-    const groundObj = ground.get();
-    if (groundObj) scene.add(groundObj);
+    scene.add(ground.get()!);
 
     // Свет
     lighting.create();
-    toggleAmbientLight()
 
     // Куб
     cube.create();
-    const cubeObj = cube.get();
-    if (cubeObj) scene.add(cubeObj);
+    scene.add(cube.get()!);
 
     // Глаз
     eye.create();
-    const eyeGroup = eye.getGroup();
-    if (eyeGroup) scene.add(eyeGroup);
-    const eyeLight = eye.getLight();
-    if (eyeLight) scene.add(eyeLight);
+    scene.add(eye.getGroup()!);
+    //включаем свет
+    toggleEyeLight()
     // Синхронизируем свет глаза на куб
-    const cubePos = cube.getCoordinates();
-    if (cubePos) eye.syncPosition(cubePos);
+    eye.syncPosition(cube.getCoordinates()!);
     
-    // // создаем свет от глаза (и сам глаз)
-    // initEye(sceneRefs.scene);
-    // syncPosition(cube.position.clone());
 
-    // //создаем дверь
-    // const door = createDoor();
-    // sceneRefs.scene.add(door);
-    // // lookAt()
+    // Зеркальный куб 
+    mirror.create([2, 0.5, -2], 1);
+    scene.add(mirror.getGroup()!);
 
-       // --- Область передвижения куба ---
-       const { sphereCenter, minDistance, maxDistance } = cubeMovementLimits;
-       const ringSegments = 64;
-       // Минимальный радиус
-       const minGeometry = new THREE.RingGeometry(minDistance - 0.01, minDistance + 0.01, ringSegments);
-       const minMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000, opacity: 0.5, transparent: true, side: THREE.DoubleSide });
-       minAreaMesh = new THREE.Mesh(minGeometry, minMaterial);
-       minAreaMesh.position.set(sphereCenter.x, 0.011, sphereCenter.z);
-       minAreaMesh.rotation.x = -Math.PI / 2;
-       scene.add(minAreaMesh);
-       // Максимальный радиус
-       const maxGeometry = new THREE.RingGeometry(maxDistance - 0.01, maxDistance + 0.01, ringSegments);
-       const maxMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00, opacity: 0.5, transparent: true, side: THREE.DoubleSide });
-       maxAreaMesh = new THREE.Mesh(maxGeometry, maxMaterial);
-       maxAreaMesh.position.set(sphereCenter.x, 0.012, sphereCenter.z);
-       maxAreaMesh.rotation.x = -Math.PI / 2;
-       scene.add(maxAreaMesh);
+    // Дверь
+    door.create({ width: DOOR_SIZE, height: DOOR_SIZE * 2, depth: 0.2, position: DOOR_POSITION });
+    scene.add(door.get()!);
+    door.lookAt(eye.getCoordinates()!)
+    
 
-
-    // // создаем зеркальный куб
-    // const mirrorCubeObj = createMirrorCube([1, 0.5, -1], 1);
-    // sceneRefs.mirrorCube = mirrorCubeObj
-    // sceneRefs.scene.add(mirrorCubeObj.group);
-
-    // --- Запуск анимационного цикла ---
+    // Запуск анимационного цикла
     const controls = core.getControls()
     const camera = core.getCamera()
     const renderer = core.getRenderer()
+    const logger = useLogger()
+    // logger.subscribe(camera?.position, 1000);
+    
     const animate = () => {
       controls?.update();
+      // Обновление отражения зеркального куба
+      const updateMirror = mirror.getUpdate();
+      if (updateMirror && renderer) updateMirror(renderer, scene);
       if (camera && renderer) renderer.render(scene, camera);
+      
       animationId = requestAnimationFrame(animate);
+      logger.tick();
     };
     animate();
 
@@ -117,25 +98,30 @@ export const useScene = () => {
 
   const moveCube = (direction: string) => {
     cube.move(direction, cubeMovementLimits);
-    // syncPosition(cube.getCoordinates()); // если нужно синхронизировать позицию
+    eye.syncPosition(cube.getCoordinates()!);
   };
 
   const teleportCube = () => {
     cube.teleport(cubeMovementLimits);
-    // syncPosition(cube.getCoordinates()); // если нужно синхронизировать позицию
+    eye.syncPosition(cube.getCoordinates()!);
   };
 
   const toggleEyeLight = () => {
     const scene = core.getScene();
     if (!scene) return;
 
-    eye.toggle();
     const eyeLight = eye.getLight();
-    if (eyeLight && eye.getIsOn()) scene.add(eyeLight);
-  };
+    if (!eyeLight) return
 
-  const setDoorSize = () => {
-    // setSize({ width, height });
+    eye.toggle();
+
+    eye.getIsOn() ? 
+      scene.add(eyeLight) :
+      scene.remove(eyeLight);
+  }
+
+  const setDoorSize = ({ width, height }: { width: number; height: number }) => {
+    door.setSize({ width, height });
   };
 
   const destroy = () => {
@@ -143,33 +129,9 @@ export const useScene = () => {
       cancelAnimationFrame(animationId);
       animationId = null;
     }
-    if (minAreaMesh) {
-      const scene = core.getScene();
-      if (scene) scene.remove(minAreaMesh);
-      minAreaMesh.geometry.dispose();
-      (minAreaMesh.material as THREE.Material).dispose();
-      minAreaMesh = null;
-    }
-    if (maxAreaMesh) {
-      const scene = core.getScene();
-      if (scene) scene.remove(maxAreaMesh);
-      maxAreaMesh.geometry.dispose();
-      (maxAreaMesh.material as THREE.Material).dispose();
-      maxAreaMesh = null;
-    }
-    // Удаляем объекты и свет от глаза
-    const scene = core.getScene();
-    if (scene) {
-      const eyeGroup = eye.getGroup();
-      if (eyeGroup) scene.remove(eyeGroup);
-      const eyeLight = eye.getLight();
-      if (eyeLight) scene.remove(eyeLight);
-    }
-    eye.dispose();
-    lighting.dispose();
-    ground.dispose();
-    sky.dispose();
-    // ... dispose других объектов при необходимости
+    // пока достаточно кор диспоза
+    door.dispose();
+    core.dispose();
   };
 
   return {

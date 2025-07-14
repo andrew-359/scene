@@ -7,7 +7,7 @@ export const useEyeLight = () => {
   let lightSphere: THREE.Mesh | null = null;
   let lightSphere2: THREE.Mesh | null = null;
   let pointLight: THREE.PointLight | null = null;
-  let isOn = true;
+  let isOn = false;
 
   const create = () => {
     if (group) return;
@@ -132,6 +132,11 @@ export const useEyeLight = () => {
     pointLight = null;
   };
 
+  const getCoordinates = () => {
+    if (!sphere) return null;
+    return sphere.position.clone();
+  };
+
   return {
     create,
     getGroup,
@@ -139,6 +144,7 @@ export const useEyeLight = () => {
     toggle,
     syncPosition,
     dispose,
-    getIsOn
+    getIsOn,
+    getCoordinates
   };
 }; 
