@@ -20,7 +20,7 @@ export const useCoreSceneObjects = () => {
 
     // Camera
     camera = new THREE.PerspectiveCamera(60, canvas.clientWidth / canvas.clientHeight, 0.1, 100);
-    camera.position.set(-2.9, 8, -8.6);
+    camera.position.set(-5.3, 4.4, 1.1);
     camera.lookAt(0, 0, 0);
 
     // Controls

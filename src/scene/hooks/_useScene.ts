@@ -1,4 +1,3 @@
-import * as THREE from 'three';
 import { useSky } from './useSky';
 import { useGround } from './useGround';
 import { useCube } from './useCube';
@@ -70,7 +69,7 @@ export const useScene = () => {
     const camera = core.getCamera()
     const renderer = core.getRenderer()
     const logger = useLogger()
-    // logger.subscribe(camera?.position, 1000);
+    logger.subscribe(camera?.position, 1000);
     
     const animate = () => {
       controls?.update();

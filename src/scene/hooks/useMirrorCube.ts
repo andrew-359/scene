@@ -1,4 +1,4 @@
-import { BoxGeometry, Mesh, MeshPhysicalMaterial, Group, CubeCamera, WebGLRenderer, Scene, WebGLCubeRenderTarget } from 'three';
+import { SphereGeometry, Mesh, MeshPhysicalMaterial, Group, CubeCamera, WebGLRenderer, Scene, WebGLCubeRenderTarget } from 'three';
 
 export const useMirrorCube = () => {
   let group: Group | null = null;
@@ -12,7 +12,6 @@ export const useMirrorCube = () => {
     cubeCamera = new CubeCamera(0.1, 100, renderTarget);
     cubeCamera.position.set(...position);
     const mirrorMaterial = new MeshPhysicalMaterial({
-      color: 0xffffff,
       metalness: 1,
       roughness: 0,
       clearcoat: 1,
@@ -21,7 +20,7 @@ export const useMirrorCube = () => {
       envMap: cubeCamera.renderTarget.texture,
       envMapIntensity: 1,
     });
-    const geometry = new BoxGeometry(size, size, size);
+    const geometry = new SphereGeometry(size / 2, 48, 32);
     cube = new Mesh(geometry, mirrorMaterial);
     cube.position.set(...position);
     cube.castShadow = true;
